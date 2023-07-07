@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "daxi-farm-sensor"
+version = "0.1.0"
+description = ""
+authors = ["exkuretrol <33695301+exkuretrol@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+shiny = "^0.4.0"
+pandas = "^2.0.2"
+tomlkit = "^0.11.8"
+shinywidgets = "^0.2.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
