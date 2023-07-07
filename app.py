@@ -5,12 +5,15 @@ import pandas as pd
 
 config = loads(open("secrets.toml").read())
 
+css_path = Path(__file__).parent / "public" / "css" / "style.css"
+
 def load_sheet() -> pd.DataFrame:
     csv_url = f"https://docs.google.com/spreadsheets/d/{config['sheet']['sheet_id']}/export?format=csv"
     return pd.read_csv(csv_url)
 
 # Part 1: ui
 app_ui = ui.page_fluid(
+    ui.include_css(css_path),
     ui.input_slider(
         id="n",
         label="N",
