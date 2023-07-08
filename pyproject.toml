@@ -6,12 +6,15 @@ authors = ["exkuretrol <33695301+exkuretrol@users.noreply.github.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 shiny = "^0.4.0"
 pandas = "^2.0.2"
 tomlkit = "^0.11.8"
 shinywidgets = "^0.2.1"
 
+
+[tool.poetry.group.dev.dependencies]
+rsconnect-python = "^1.18.0"
 
 [build-system]
 requires = ["poetry-core"]
