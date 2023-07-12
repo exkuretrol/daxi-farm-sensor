@@ -3,6 +3,8 @@ from shiny import App, Inputs, Outputs, Session, ui, render, reactive
 from tomlkit import loads
 # import asyncio
 import pandas as pd
+from plotly import express as px
+from shinywidgets import output_widget, render_widget
 
 root_dir = Path(__file__).parent
 
@@ -71,6 +73,10 @@ def UI():
                             **感測器位置**：{ui.output_text("out_sensors", inline=True)}
                             """
                         ),
+                    ),
+                    ui.nav(
+                        "圖",
+                        output_widget(id="ts")
                     )
                 ),
             )
@@ -118,5 +124,14 @@ def server(input: Inputs, output: Outputs, session: Session):
         m, M = input.input_date_range()
         mask = ((df1['時間'].dt.date >= m) & (df1['時間'].dt.date <= M))
         return df1.loc[mask]
+
+    @output
+    @render_widget
+    def ts():
+        df = sheet.get().copy()
+        fig = px.line(df, x="時間", y=df.columns,
+                      hover_data={"時間": "|%B %d, %Y"})
+        return fig
+
 
 app = App(UI(), server, debug=False)

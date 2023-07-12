@@ -11,6 +11,7 @@ shiny = "^0.4.0"
 pandas = "^2.0.2"
 tomlkit = "^0.11.8"
 shinywidgets = "^0.2.1"
+plotly = "^5.15.0"
 
 
 [tool.poetry.group.dev.dependencies]
