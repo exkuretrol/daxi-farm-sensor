@@ -26,6 +26,9 @@ def load_sheet(location: str) -> pd.DataFrame:
 
 # Part 1: ui
 def UI():
+    # TODO: 選頻率, e.g. 天/小時
+    # TODO: 選變數, 單選/多選
+
     return ui.page_fixed(
         ui.include_css(css_path),
         ui.tags.title("大溪感測器"),
@@ -129,8 +132,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render_widget
     def ts():
         df = sheet.get().copy()
-        fig = px.line(df, x="時間", y=df.columns,
-                      hover_data={"時間": "|%B %d, %Y"})
+        fig = px.line(df, x="時間", y="氣溫")
         return fig
 
 
