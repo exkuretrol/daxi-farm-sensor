@@ -41,10 +41,12 @@ def load_sheet(location: str) -> pd.DataFrame:
     elif location == "outdoor":
         soil_cols = [i + str(j) for j in range(1, 5) for i in soil]
         rain_cols = ['雨量', 'rain_event', 'rain_totalevent', 'rain_IPH']
-        df = df.assign(**df[common_cols + soil_cols + rain_cols].astype("float64"))
+        new_cols = common_cols + soil_cols + rain_cols
+        df = df.assign(**df[new_cols].astype("float64"))
+        new_cols = ['時間'] + new_cols
+        df = df[new_cols]
 
     df['時間'] = pd.to_datetime(df['時間'], format='%Y-%m-%d %H:%M:%S')
-    print(df.info())
     return df
 
 
@@ -93,9 +95,15 @@ def data_range_filter_panel():
                     },
                     selected="default"
                 ),
+                ui.input_selectize(
+                    id="variable_select",
+                    label="變數",
+                    choices=[],
+                    multiple=True
+                ),
                 ui.input_action_button(
                     id="btn_filter",
-                    label="篩選"
+                    label="篩選",
                 ),
             ),
         ),
@@ -170,6 +178,10 @@ def server(input: Inputs, output: Outputs, session: Session):
         M = sheet.get()['時間'].max().date()
         return m, M
 
+    @reactive.Calc
+    def get_variables():
+        return sheet.get().columns.drop('時間').tolist()
+
     @reactive.Effect
     def _():
         m, M = get_date_range()
@@ -180,11 +192,19 @@ def server(input: Inputs, output: Outputs, session: Session):
             min=m,
             max=M,
         )
+        variables = get_variables()
+        ui.update_selectize(
+            id="variable_select",
+            choices=variables,
+            selected=variables
+        )
+        
 
     @output
     @render.data_frame
     @reactive.event(input.btn_filter)
     @reactive.event(input.frequency_select)
+    @reactive.event(input.variable_select)
     def df():
         df1 = sheet.get().copy()
         m, M = input.input_date_range()
@@ -193,15 +213,16 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         if input.frequency_select() == "hour":
             df1 = df1.resample('H', on='時間').mean()
-            df1['時間'] = df1.index.strftime('%Y/%m/%d %H:%M:%S')
+            df1['時間'] = df1.index.strftime('%Y/%m/%d %H:%M')
         elif input.frequency_select() == "day":
             df1 = df1.resample('D', on='時間').mean()
             df1['時間'] = df1.index.strftime('%Y/%m/%d')
         else:
             df1['時間'] = df1['時間'].dt.strftime('%Y/%m/%d %H:%M:%S')
         
-        print(df1)
-        return df1
+        new_cols = ['時間'] + list(input.variable_select())
+
+        return df1[new_cols]
 
     @output
     @render_widget
