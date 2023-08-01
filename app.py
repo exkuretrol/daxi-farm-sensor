@@ -1,5 +1,7 @@
 from pathlib import Path
+from htmltools import Tag, TagChild
 from shiny import App, Inputs, Outputs, Session, ui, render, reactive
+from shiny.types import NavSetArg
 from tomlkit import loads
 import asyncio
 import pandas as pd
@@ -10,6 +12,7 @@ from shinywidgets import output_widget, render_widget
 import numpy as np
 from collections import defaultdict
 import io
+from typing import List
 
 root_dir = Path(__file__).parent
 
@@ -19,11 +22,20 @@ config = loads((root_dir / "secrets.toml").open().read())
 
 css_path = public_dir / "css" / "style.css"
 
+js_path = public_dir / "js" / "main.js"
+
 # sheet
 
 sheet_config = config.get("sheet")
 
 sheet_url = f"https://docs.google.com/spreadsheets/d/{sheet_config.get('id')}"
+
+# sensors
+
+sensor_dict = {
+    "indoor": "溫室",
+    "outdoor": "室外"
+}
 
 
 def load_sheet(location: str) -> pd.DataFrame:
@@ -68,6 +80,19 @@ def panel_box(*args, **kwargs):
     )
 
 
+def container(*args: TagChild, _class=""):
+    return ui.div(
+        {"class": "container" + " " + _class},
+        *args,
+    )
+
+
+def faicon(_class="") -> Tag:
+    return ui.tags.i(
+        {"class": _class}
+    )
+
+
 def spacer():
     """
     元素間空格
@@ -87,10 +112,7 @@ def data_range_filter_panel():
                 ui.input_radio_buttons(
                     id="sensors",
                     label="感測器位置",
-                    choices={
-                        "indoor": "溫室",
-                        "outdoor": "室外"
-                    },
+                    choices=sensor_dict,
                     selected="indoor"
                 ),
                 ui.input_action_button(
@@ -98,9 +120,6 @@ def data_range_filter_panel():
                     label="讀取",
                     class_="btn-danger mb-3"
                 ),
-                ui.output_text_verbatim(
-                    id="sheet_info",
-                )
             ),
             class_="h-full"
         ),
@@ -110,13 +129,6 @@ def data_range_filter_panel():
                 ui.h3(
                     {"class": "card-title"},
                     "第二步"
-                ),
-                ui.a(
-                    "表單連結",
-                    {
-                        "href": sheet_url,
-                        "target": "_blank"
-                    }
                 ),
                 ui.input_date_range(
                     id="input_date_range",
@@ -141,31 +153,134 @@ def data_range_filter_panel():
                 ),
                 ui.input_action_button(
                     id="btn_filter",
-                    label="篩選",
+                    label="查詢",
                 ),
             ),
         ),
         class_="mb-3",
     )
 
+
+def nav_controls() -> List[NavSetArg]:
+    return [
+        ui.nav(
+            "資料說明",
+            container(
+                ui.markdown((root_dir / "introduction.md").open().read()),
+                _class="typographic",
+            ),
+            icon=faicon("fa-solid fa-circle-info me-1")
+        ),
+        ui.nav(
+            "選擇感測器",
+            container(
+                data_range_filter_panel(),
+            ),
+            icon=faicon("fa-solid fa-satellite-dish me-1")
+        ),
+        ui.nav(
+            "敘述統計圖",
+            container(
+                ui.navset_tab_card(
+                    ui.nav(
+                        "所有變數",
+                        output_widget(
+                            "all_variables_plot"
+                        )
+                    ),
+                    ui.nav(
+                        "各變數",
+                        ui.div(
+                            {"id": "plots"},
+                        )
+                    )
+                )
+            ),
+            icon=faicon("fa-solid fa-compass-drafting me-1")
+        ),
+        ui.nav(
+            "資料框",
+            container(
+                panel_box(
+                    ui.h5(
+                        {"class": "card-title"},
+                        "目前使用者篩選的資料框",
+                    ),
+                    ui.output_data_frame(id="user_select_sheet")
+                ),
+                panel_box(
+                    ui.h5(
+                        {"class": "card-title"},
+                        "資料框非缺失值統計",
+                    ),
+                    ui.output_text_verbatim(
+                        id="sheet_info",
+                    )
+                )
+            ),
+            icon=faicon("fa-solid fa-table me-1")
+        ),
+        ui.nav_spacer(),
+        ui.nav_control(
+            ui.a(
+                "所選的感測器：",
+                ui.output_text("which_sensor"),
+                {
+                    "class": "d-flex disabled"
+                }
+            ),
+        ),
+        ui.nav(
+            "已知問題",
+            container(
+                ui.markdown((root_dir / "issues.md").open().read()),
+            ),
+            icon=faicon("fa-solid fa-bug me-1")
+        ),
+        ui.nav_control(
+            ui.a(
+                faicon(
+
+                    "fa-solid fa-arrow-up-right-from-square me-1"
+                ),
+                "表單連結",
+                {
+                    "href": sheet_url,
+                    "target": "_blank"
+                }
+            ),
+        ),
+        ui.nav_control(
+            ui.a(
+                faicon("fa-brands fa-github me-1"),
+                "查看原始碼",
+                href="https://github.com/exkuretrol/daxi-farm-sensor",
+                target="_blank"
+            )
+        )
+    ]
+
+
 # Part 1: ui
 
 
 def UI():
-    return ui.page_fixed(
-        ui.include_css(css_path),
-        ui.tags.title("大溪感測器"),
-        ui.markdown((root_dir / "introduction.md").open().read()),
-        spacer(),
-        data_range_filter_panel(),
-        panel_box(
-            ui.output_data_frame(id="user_select_sheet")
-        ),
-        spacer(),
-        ui.div(
-            {"id": "plots"}
+    return ui.page_navbar(
+        *nav_controls(),
+        title="大溪農場物聯網",
+        position="fixed-top",
+        footer=ui.div(
+            ui.head_content(
+                ui.include_js(js_path),
+                ui.include_css(css_path),
+                ui.tags.script(
+                    src="https://kit.fontawesome.com/365bdfe65e.js",
+                    crossorigin="anonymous"
+                )
+            )
         )
     )
+
 
 # Part 2: server
 
@@ -185,6 +300,11 @@ def server(input: Inputs, output: Outputs, session: Session):
         buffer = io.StringIO()
         sheet.get().info(buf=buffer)
         return buffer.getvalue()
+
+    @output
+    @render.text
+    def which_sensor():
+        return sensor_dict[input.sensors()]
 
     @reactive.Calc
     def get_date_range():
@@ -487,6 +607,31 @@ def server(input: Inputs, output: Outputs, session: Session):
                 ),
                 "#plots"
             )
+
+    @output
+    @render_widget
+    def all_variables_plot():
+        df = user_sheet.get()
+        columns = df.drop(["時間", "原本的時間"], axis=1).columns.tolist()
+
+        fig = make_subplots(rows=len(columns), cols=1)
+
+        
+        for i, column in enumerate(columns) :
+            fig.append_trace(
+                go.Scatter(
+                    y=df[column],
+                    x=df["原本的時間"],
+                    name=column
+                ),
+                row= i + 1,
+                col=1
+            )
+
+        fig.update_layout(
+            height=800,
+        )
+        return fig
 
 
 app = App(
