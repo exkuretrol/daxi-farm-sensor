@@ -305,14 +305,9 @@ def nav_controls() -> List[NavSetArg]:
             "變數間趨勢圖",
             container(
                 data_range_filter_panel(),
-                panel_box(
-                    ui.h5(
-                        {"class": "card-title"},
-                        "趨勢圖"
-                    ),
-                    output_widget(
-                        id="user_select_time_variable_plot", height="auto")
-                ),
+                # TODO: cannot display with .card class?
+                output_widget(
+                    id="user_select_time_variable_plot", height="auto")
             ),
             icon=faicon("fa-solid fa-satellite-dish me-1")
         ),
@@ -663,7 +658,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         df1 = df1.loc[mask1]
         mask2 = ((df2['時間'].dt.date >= m) & (df2['時間'].dt.date <= M))
         df2 = df2.loc[mask2]
-        
+
         fig.add_trace(
             go.Scatter(
                 x=df1[column1],
