@@ -36,7 +36,7 @@ sheet_url = f"https://docs.google.com/spreadsheets/d/{sheet_config.get('id')}"
 
 sensor_dict = {
     "indoor": "溫室",
-    "outdoor": "室外"
+    "outdoor": "室外",
 }
 
 # HTML elements
@@ -156,6 +156,9 @@ def get_variables(sheet: pd.DataFrame):
 
 
 def data_range_filter_panel():
+    """
+    資料篩選面板
+    """
     return ui.row(
         ui.column(
             4,
@@ -215,6 +218,76 @@ def data_range_filter_panel():
         class_="mb-3",
     )
 
+
+def cross_analysis_filter_panel():
+    """
+    交叉分析篩選面板
+
+    """
+    return ui.div(
+        ui.row(
+            ui.column(
+                6,
+                panel_box(
+                    ui.h5(
+                        {"class": "card-title"},
+                        "變數 1"
+                    ),
+                    ui.input_selectize(
+                        id="cross_analysis_sensor_1",
+                        label="感測器位置",
+                        choices=sensor_dict,
+                    ),
+                    ui.input_selectize(
+                        id="cross_analysis_var_1",
+                        label="變數 1",
+                        choices=[],
+                    ),
+                ),
+            ),
+            ui.column(
+                6,
+                panel_box(
+                    ui.h5(
+                        {"class": "card-title"},
+                        "變數 2"
+                    ),
+                    ui.input_selectize(
+                        id="cross_analysis_sensor_2",
+                        label="感測器位置",
+                        choices=sensor_dict
+                    ),
+                    ui.input_selectize(
+                        id="cross_analysis_var_2",
+                        label="變數 2",
+                        choices=[],
+                    ),
+                ),
+            ),
+            {"class": "mb-3"}
+        ),
+        ui.row(
+            ui.column(
+                12,
+                ui.panel_conditional(
+                    "input.cross_analysis_sensor_1 && input.cross_analysis_sensor_2 && input.cross_analysis_var_1 && input.cross_analysis_var_2",
+                    panel_box(
+                        ui.input_date_range(
+                            id="input_date_range_alt",
+                            label="測量區間",
+                            language="zh-TW",
+                        ),
+                        ui.input_action_button(
+                            id="query",
+                            label="查詢",
+                            class_="me-auto"
+                        )
+                    )
+                )
+            ),
+        ),
+    )
+
 # 導覽列
 
 
@@ -237,7 +310,22 @@ def nav_controls() -> List[NavSetArg]:
                         {"class": "card-title"},
                         "趨勢圖"
                     ),
-                    output_widget(id="user_select_time_variable_plot", height="auto")
+                    output_widget(
+                        id="user_select_time_variable_plot", height="auto")
+                ),
+            ),
+            icon=faicon("fa-solid fa-satellite-dish me-1")
+        ),
+        ui.nav(
+            "交叉分析",
+            container(
+                cross_analysis_filter_panel(),
+                panel_box(
+                    ui.h5(
+                        {"class": "card-title"},
+                        "散佈圖"
+                    ),
+                    output_widget(id="cross_analysis", height="auto")
                 ),
             ),
             icon=faicon("fa-solid fa-satellite-dish me-1")
@@ -410,7 +498,70 @@ def server(input: Inputs, output: Outputs, session: Session):
         ui.update_selectize(
             id="variable_select",
             choices=variables,
-            selected=variables
+        )
+
+    @reactive.Effect
+    @reactive.event(input.cross_analysis_sensor_1)
+    def _():
+        location = input.cross_analysis_sensor_1()
+        df = None
+        if location == "indoor":
+            df = indoor_sheet.get()
+        else:
+            df = outdoor_sheet.get()
+
+        variables = collapse_soil_cols(get_variables(df))
+        ui.update_selectize(
+            id="cross_analysis_var_1",
+            choices=variables,
+        )
+
+    @reactive.Effect
+    @reactive.event(input.cross_analysis_sensor_2)
+    def _():
+        location = input.cross_analysis_sensor_2()
+        df = None
+        if location == "indoor":
+            df = indoor_sheet.get()
+        else:
+            df = outdoor_sheet.get()
+
+        variables = get_variables(df)
+        ui.update_selectize(
+            id="cross_analysis_var_2",
+            choices=variables,
+        )
+
+    @reactive.Effect
+    @reactive.event(input.cross_analysis_sensor_1, input.cross_analysis_sensor_2)
+    def _():
+        location1 = input.cross_analysis_sensor_1()
+        location2 = input.cross_analysis_sensor_2()
+
+        df1, df2 = None, None
+
+        if location1 == "indoor":
+            df1 = indoor_sheet.get()
+        else:
+            df1 = outdoor_sheet.get()
+
+        if location2 == "indoor":
+            df2 = indoor_sheet.get()
+        else:
+            df2 = outdoor_sheet.get()
+
+        m1, M1 = get_date_range(df1)
+        m2, M2 = get_date_range(df2)
+
+        m = max(m1, m2)
+        M = min(M1, M2)
+
+        ui.update_date_range(
+            id="input_date_range_alt",
+            start=m,
+            end=M,
+            min=m,
+            max=M,
         )
 
     @output
@@ -480,256 +631,277 @@ def server(input: Inputs, output: Outputs, session: Session):
         )
         return fig
 
+    @output
+    @render_widget
+    @reactive.event(input.query)
+    def cross_analysis():
+        fig = go.Figure()
+        column1 = input.cross_analysis_var_1()
+        column2 = input.cross_analysis_var_2()
+        print(column1, column2)
+
+        var1_label_name = input.cross_analysis_sensor_1() + input.cross_analysis_var_1()
+        var2_label_name = input.cross_analysis_sensor_2() + input.cross_analysis_var_2()
+
+        location1 = input.cross_analysis_sensor_1()
+        location2 = input.cross_analysis_sensor_2()
+
+        df1, df2 = None, None
+
+        if location1 == "indoor":
+            df1 = indoor_sheet.get()
+        else:
+            df1 = outdoor_sheet.get()
+
+        if location2 == "indoor":
+            df2 = indoor_sheet.get()
+        else:
+            df2 = outdoor_sheet.get()
+
+        m, M = input.input_date_range_alt()
+        mask1 = ((df1['時間'].dt.date >= m) & (df1['時間'].dt.date <= M))
+        df1 = df1.loc[mask1]
+        mask2 = ((df2['時間'].dt.date >= m) & (df2['時間'].dt.date <= M))
+        df2 = df2.loc[mask2]
+        
+        fig.add_trace(
+            go.Scatter(
+                x=df1[column1],
+                y=df2[column2],
+                mode='markers'
+            )
+        )
+
+        fig.update_layout(
+            autosize=True,
+            height=450
+        )
+        return fig
+
     # plots ----
-    # @output
-    # @render_widget
-    # def temperature():
-    #     df = user_sheet.get()
-    #     fig = px.line(df, x="原本的時間", y="氣溫")
-    #     return fig
 
-    # @output
-    # @render_widget
-    # def pressure():
-    #     df = user_sheet.get()
-    #     fig = px.line(df, x="原本的時間", y="氣壓")
-    #     return fig
+    @output
+    @render_widget
+    def temperature():
+        df = user_sheet.get()
+        fig = px.line(df, x="原本的時間", y="氣溫")
+        return fig
 
-    # @output
-    # @render_widget
-    # def humidity():
-    #     df = user_sheet.get()
-    #     fig = px.line(df, x="原本的時間", y="空氣相對溼度")
-    #     return fig
+    @output
+    @render_widget
+    def pressure():
+        df = user_sheet.get()
+        fig = px.line(df, x="原本的時間", y="氣壓")
+        return fig
 
-    # @output
-    # @render_widget
-    # def brightness():
-    #     df = user_sheet.get()
-    #     fig = px.line(df, x="原本的時間", y="光強度")
-    #     return fig
+    @output
+    @render_widget
+    def humidity():
+        df = user_sheet.get()
+        fig = px.line(df, x="原本的時間", y="空氣相對溼度")
+        return fig
 
-    # @output
-    # @render_widget
-    # def winddirection():
-    #     df = user_sheet.get()
-    #     fig = px.line(df, x="原本的時間", y="風向")
-    #     return fig
+    @output
+    @render_widget
+    def brightness():
+        df = user_sheet.get()
+        fig = px.line(df, x="原本的時間", y="光強度")
+        return fig
 
-    # @output
-    # @render_widget
-    # def windspeed():
-    #     df = user_sheet.get()
-    #     fig = px.line(df, x="原本的時間", y="風速")
-    #     return fig
+    @output
+    @render_widget
+    def winddirection():
+        df = user_sheet.get()
+        fig = px.line(df, x="原本的時間", y="風向")
+        return fig
 
-    # @output
-    # @render_widget
-    # def soilsensor1():
-    #     df = user_sheet.get()
-    #     fig = make_subplots(rows=3, cols=1)
-    #     fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤溫度1"]), row=1, col=1)
-    #     fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤濕度1"]), row=2, col=1)
-    #     fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤電導度1"]), row=3, col=1)
-    #     fig.update_layout(height=600)
-    #     return fig
+    @output
+    @render_widget
+    def windspeed():
+        df = user_sheet.get()
+        fig = px.line(df, x="原本的時間", y="風速")
+        return fig
 
-    # @output
-    # @render_widget
-    # def soilsensor2():
-    #     df = user_sheet.get()
-    #     fig = make_subplots(rows=3, cols=1)
-    #     fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤溫度2"]), row=1, col=1)
-    #     fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤濕度2"]), row=2, col=1)
-    #     fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤電導度2"]), row=3, col=1)
-    #     fig.update_layout(height=600)
-    #     return fig
+    @output
+    @render_widget
+    def soilsensor1():
+        df = user_sheet.get()
+        fig = make_subplots(rows=3, cols=1)
+        fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤溫度1"]), row=1, col=1)
+        fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤濕度1"]), row=2, col=1)
+        fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤電導度1"]), row=3, col=1)
+        fig.update_layout(height=600)
+        return fig
 
-    # @output
-    # @render_widget
-    # def soilsensor3():
-    #     df = user_sheet.get()
-    #     fig = make_subplots(rows=3, cols=1)
-    #     fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤溫度3"]), row=1, col=1)
-    #     fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤濕度3"]), row=2, col=1)
-    #     fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤電導度3"]), row=3, col=1)
-    #     fig.update_layout(height=600)
-    #     return fig
+    @output
+    @render_widget
+    def soilsensor2():
+        df = user_sheet.get()
+        fig = make_subplots(rows=3, cols=1)
+        fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤溫度2"]), row=1, col=1)
+        fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤濕度2"]), row=2, col=1)
+        fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤電導度2"]), row=3, col=1)
+        fig.update_layout(height=600)
+        return fig
 
-    # @output
-    # @render_widget
-    # def soilsensor4():
-    #     df = user_sheet.get()
-    #     fig = make_subplots(rows=3, cols=1)
-    #     fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤溫度4"]), row=1, col=1)
-    #     fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤濕度4"]), row=2, col=1)
-    #     fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤電導度4"]), row=3, col=1)
-    #     fig.update_layout(height=600)
-    #     return fig
+    @output
+    @render_widget
+    def soilsensor3():
+        df = user_sheet.get()
+        fig = make_subplots(rows=3, cols=1)
+        fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤溫度3"]), row=1, col=1)
+        fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤濕度3"]), row=2, col=1)
+        fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤電導度3"]), row=3, col=1)
+        fig.update_layout(height=600)
+        return fig
 
-    # @reactive.Effect
-    # def _():
-    #     ui.remove_ui(selector=".card:has(.plot)", multiple=True)
+    @output
+    @render_widget
+    def soilsensor4():
+        df = user_sheet.get()
+        fig = make_subplots(rows=3, cols=1)
+        fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤溫度4"]), row=1, col=1)
+        fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤濕度4"]), row=2, col=1)
+        fig.add_trace(go.Scatter(x=df["原本的時間"], y=df["土壤電導度4"]), row=3, col=1)
+        fig.update_layout(height=600)
+        return fig
 
-    #     user_select_variable = collapse_soil_cols(
-    #         user_sheet.get().columns.tolist())
+    @reactive.Effect
+    def _():
+        ui.remove_ui(selector=".card:has(.plot)", multiple=True)
 
-    #     if "氣壓" in user_select_variable:
-    #         ui.insert_ui(
-    #             panel_box(
-    #                 {"class": "plot"},
-    #                 ui.h5(
-    #                     {"class": "card-title"},
-    #                     "氣壓",
-    #                 ),
-    #                 output_widget(id="pressure")
-    #             ),
-    #             "#plots"
-    #         )
+        user_select_variable = collapse_soil_cols(
+            user_sheet.get().columns.tolist())
 
-    #     if "氣溫" in user_select_variable:
-    #         ui.insert_ui(
-    #             panel_box(
-    #                 {"class": "plot"},
-    #                 ui.h5(
-    #                     {"class": "card-title"},
-    #                     "氣溫",
-    #                 ),
-    #                 output_widget(id="temperature")
-    #             ),
-    #             "#plots"
-    #         )
+        if "氣壓" in user_select_variable:
+            ui.insert_ui(
+                panel_box(
+                    {"class": "plot"},
+                    ui.h5(
+                        {"class": "card-title"},
+                        "氣壓",
+                    ),
+                    output_widget(id="pressure")
+                ),
+                "#plots"
+            )
 
-    #     if "空氣相對溼度" in user_select_variable:
-    #         ui.insert_ui(
-    #             panel_box(
-    #                 {"class": "plot"},
-    #                 ui.h5(
-    #                     {"class": "card-title"},
-    #                     "空氣相對溼度",
-    #                 ),
-    #                 output_widget(id="humidity")
-    #             ),
-    #             "#plots"
-    #         )
+        if "氣溫" in user_select_variable:
+            ui.insert_ui(
+                panel_box(
+                    {"class": "plot"},
+                    ui.h5(
+                        {"class": "card-title"},
+                        "氣溫",
+                    ),
+                    output_widget(id="temperature")
+                ),
+                "#plots"
+            )
 
-    #     if "光強度" in user_select_variable:
-    #         ui.insert_ui(
-    #             panel_box(
-    #                 {"class": "plot"},
-    #                 ui.h5(
-    #                     {"class": "card-title"},
-    #                     "光強度",
-    #                 ),
-    #                 output_widget(id="brightness")
-    #             ),
-    #             "#plots"
-    #         )
+        if "空氣相對溼度" in user_select_variable:
+            ui.insert_ui(
+                panel_box(
+                    {"class": "plot"},
+                    ui.h5(
+                        {"class": "card-title"},
+                        "空氣相對溼度",
+                    ),
+                    output_widget(id="humidity")
+                ),
+                "#plots"
+            )
 
-    #     if "風向" in user_select_variable:
-    #         ui.insert_ui(
-    #             panel_box(
-    #                 {"class": "plot"},
-    #                 ui.h5(
-    #                     {"class": "card-title"},
-    #                     "風向",
-    #                 ),
-    #                 output_widget(id="winddirection")
-    #             ),
-    #             "#plots"
-    #         )
+        if "光強度" in user_select_variable:
+            ui.insert_ui(
+                panel_box(
+                    {"class": "plot"},
+                    ui.h5(
+                        {"class": "card-title"},
+                        "光強度",
+                    ),
+                    output_widget(id="brightness")
+                ),
+                "#plots"
+            )
 
-    #     if "風速" in user_select_variable:
-    #         ui.insert_ui(
-    #             panel_box(
-    #                 {"class": "plot"},
-    #                 ui.h5(
-    #                     {"class": "card-title"},
-    #                     "風速",
-    #                 ),
-    #                 output_widget(id="windspeed")
-    #             ),
-    #             "#plots"
-    #         )
+        if "風向" in user_select_variable:
+            ui.insert_ui(
+                panel_box(
+                    {"class": "plot"},
+                    ui.h5(
+                        {"class": "card-title"},
+                        "風向",
+                    ),
+                    output_widget(id="winddirection")
+                ),
+                "#plots"
+            )
 
-    #     if "土壤感測器1" in user_select_variable:
-    #         ui.insert_ui(
-    #             panel_box(
-    #                 {"class": "plot"},
-    #                 ui.h5(
-    #                     {"class": "card-title"},
-    #                     "土壤感測器1",
-    #                 ),
-    #                 output_widget(id="soilsensor1")
-    #             ),
-    #             "#plots"
-    #         )
+        if "風速" in user_select_variable:
+            ui.insert_ui(
+                panel_box(
+                    {"class": "plot"},
+                    ui.h5(
+                        {"class": "card-title"},
+                        "風速",
+                    ),
+                    output_widget(id="windspeed")
+                ),
+                "#plots"
+            )
 
-    #     if "土壤感測器2" in user_select_variable:
-    #         ui.insert_ui(
-    #             panel_box(
-    #                 {"class": "plot"},
-    #                 ui.h5(
-    #                     {"class": "card-title"},
-    #                     "土壤感測器2",
-    #                 ),
-    #                 output_widget(id="soilsensor2")
-    #             ),
-    #             "#plots"
-    #         )
+        if "土壤感測器1" in user_select_variable:
+            ui.insert_ui(
+                panel_box(
+                    {"class": "plot"},
+                    ui.h5(
+                        {"class": "card-title"},
+                        "土壤感測器1",
+                    ),
+                    output_widget(id="soilsensor1")
+                ),
+                "#plots"
+            )
 
-    #     if "土壤感測器3" in user_select_variable:
-    #         ui.insert_ui(
-    #             panel_box(
-    #                 {"class": "plot"},
-    #                 ui.h5(
-    #                     {"class": "card-title"},
-    #                     "土壤感測器3",
-    #                 ),
-    #                 output_widget(id="soilsensor3")
-    #             ),
-    #             "#plots"
-    #         )
+        if "土壤感測器2" in user_select_variable:
+            ui.insert_ui(
+                panel_box(
+                    {"class": "plot"},
+                    ui.h5(
+                        {"class": "card-title"},
+                        "土壤感測器2",
+                    ),
+                    output_widget(id="soilsensor2")
+                ),
+                "#plots"
+            )
 
-    #     if "土壤感測器4" in user_select_variable:
-    #         ui.insert_ui(
-    #             panel_box(
-    #                 {"class": "plot"},
-    #                 ui.h5(
-    #                     {"class": "card-title"},
-    #                     "土壤感測器4",
-    #                 ),
-    #                 output_widget(id="soilsensor4")
-    #             ),
-    #             "#plots"
-    #         )
+        if "土壤感測器3" in user_select_variable:
+            ui.insert_ui(
+                panel_box(
+                    {"class": "plot"},
+                    ui.h5(
+                        {"class": "card-title"},
+                        "土壤感測器3",
+                    ),
+                    output_widget(id="soilsensor3")
+                ),
+                "#plots"
+            )
 
-    # @output
-    # @render_widget
-    # def all_variables_plot():
-    #     df = user_sheet.get()
-    #     fig = make_subplots()
-
-    #     # df = user_sheet.get()
-    #     # columns = df.drop(["時間", "原本的時間"], axis=1).columns.tolist()
-
-    #     # fig = make_subplots(rows=len(columns), cols=1)
-
-    #     # for i, column in enumerate(columns):
-    #     #     fig.append_trace(
-    #     #         go.Scatter(
-    #     #             y=df[column],
-    #     #             x=df["原本的時間"],
-    #     #             name=column
-    #     #         ),
-    #     #         row=i + 1,
-    #     #         col=1
-    #     #     )
-
-    #     # fig.update_layout(
-    #     #     height=800,
-    #     # )
-    #     return fig
+        if "土壤感測器4" in user_select_variable:
+            ui.insert_ui(
+                panel_box(
+                    {"class": "plot"},
+                    ui.h5(
+                        {"class": "card-title"},
+                        "土壤感測器4",
+                    ),
+                    output_widget(id="soilsensor4")
+                ),
+                "#plots"
+            )
 
 
 app = App(
