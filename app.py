@@ -71,33 +71,14 @@ def nav_controls() -> List[NavSetArg]:
                 icon=faicon("fa-solid fa-bomb")
             ),
         ),
-        ui.nav(
-            "已知問題",
-            container(
-                ui.markdown((root_dir / "issues.md").open().read()),
-            ),
-            icon=faicon("fa-solid fa-bug me-1")
-        ),
-        ui.nav_control(
-            ui.a(
-                faicon(
-                    "fa-solid fa-arrow-up-right-from-square me-1"
-                ),
-                "表單連結",
-                {
-                    "href": sheet_url,
-                    "target": "_blank"
-                }
-            ),
-        ),
-        ui.nav_control(
-            ui.a(
-                faicon("fa-brands fa-github me-1"),
-                "查看原始碼",
-                href="https://github.com/exkuretrol/daxi-farm-sensor",
-                target="_blank"
-            )
-        )
+        # ui.nav_control(
+        #     ui.a(
+        #         faicon("fa-brands fa-github me-1"),
+        #         "查看原始碼",
+        #         href="https://github.com/exkuretrol/daxi-farm-sensor",
+        #         target="_blank"
+        #     )
+        # )
     ]
 
 
