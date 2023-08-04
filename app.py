@@ -4,7 +4,6 @@ from typing import List
 from utils.ui_utils import *
 from utils.server_utils import *
 from config import (
-    sheet_url,
     root_dir,
     js_path,
     css_path,
@@ -16,9 +15,7 @@ from modules.cross_analysis import (
 )
 from modules.trend_analysis import (
     trend_analysis_ui,
-    trend_analysis_ui_deprecated,
     trend_analysis_server,
-    trend_analysis_server_deprecated,
 )
 from modules.dataframe import (
     dataframe_server,
@@ -51,11 +48,6 @@ def nav_controls() -> List[NavSetArg]:
             "交叉分析",
             cross_analysis_ui("cross_analysis"),
             icon=faicon("fa-solid fa-satellite-dish me-1")
-        ),
-        ui.nav(
-            "敘述統計圖",
-            trend_analysis_ui_deprecated("trend_analysis_deprecated"),
-            icon=faicon("fa-solid fa-compass-drafting me-1")
         ),
         ui.nav(
             "資料框",
@@ -127,11 +119,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         "trend_analysis",
         indoor_sheet=indoor_sheet,
         outdoor_sheet=outdoor_sheet,
-        user_sheet=user_sheet
-    )
-
-    trend_analysis_server_deprecated(
-        "trend_analysis_deprecated",
         user_sheet=user_sheet
     )
 
