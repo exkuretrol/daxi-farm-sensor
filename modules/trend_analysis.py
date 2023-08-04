@@ -20,7 +20,7 @@ def trend_analysis_ui():
     return container(
         ui.row(
             ui.column(
-                4,
+                3,
                 panel_box(
                     ui.h5(
                         {"class": "card-title"},
@@ -36,7 +36,7 @@ def trend_analysis_ui():
                 class_="h-full"
             ),
             ui.column(
-                8,
+                3,
                 panel_box(
                     ui.h5(
                         {"class": "card-title"},
@@ -44,12 +44,6 @@ def trend_analysis_ui():
                     ),
                     ui.div(
                         {"class": "d-flex row"},
-                        ui.input_date_range(
-                            id="input_date_range",
-                            label="測量區間",
-                            separator=" 至 ",
-                            language="zh-TW",
-                        ),
                         ui.input_selectize(
                             id="frequency_select",
                             label="頻率",
@@ -58,8 +52,22 @@ def trend_analysis_ui():
                                 "hour": "時",
                                 "day": "日"
                             },
-                            selected="default"
                         ),
+                        ui.input_date_range(
+                            id="input_date_range",
+                            label="測量區間",
+                            separator=" 至 ",
+                            language="zh-TW",
+                        ),
+                    ),
+                ),
+            ),
+            ui.column(
+                6,
+                panel_box(
+                    ui.h5(
+                        {"class": "card-title"},
+                        "篩選變數",
                     ),
                     ui.input_selectize(
                         id="variable_select",
@@ -68,12 +76,7 @@ def trend_analysis_ui():
                         multiple=True,
                         width="100%"
                     ),
-                    ui.input_action_button(
-                        id="btn_filter",
-                        label="查詢",
-                        class_="me-auto",
-                    ),
-                ),
+                )
             ),
             class_="mb-3",
         ),
@@ -83,7 +86,7 @@ def trend_analysis_ui():
                 "趨勢圖"
             ),
             output_widget(
-                id="user_select_time_variable_plot", 
+                id="user_select_time_variable_plot",
                 height="auto"
             )
         )
@@ -136,19 +139,22 @@ def trend_analysis_server(
         ui.update_selectize(
             id="variable_select",
             choices=variables,
+            selected=variables[1]
         )
 
-    @reactive.Effect
-    @reactive.event(input.btn_filter)
-    def _():
+    @reactive.Calc
+    def set_user_sheet():
         location = input.sensor_location()
+        m, M = input.input_date_range()
+        new_cols = ['時間', '原本的時間'] + \
+            list(expand_soil_cols(input.variable_select()))
+
         df = None
         if location == "indoor":
             df = indoor_sheet.get().copy()
         else:
             df = outdoor_sheet.get().copy()
 
-        m, M = input.input_date_range()
         mask = ((df['時間'].dt.date >= m) & (df['時間'].dt.date <= M))
         df = df.loc[mask]
         df['原本的時間'] = df['時間']
@@ -162,17 +168,16 @@ def trend_analysis_server(
         else:
             df['時間'] = df['時間'].dt.strftime('%Y/%m/%d %H:%M:%S')
 
-        new_cols = ['時間', '原本的時間'] + \
-            list(expand_soil_cols(input.variable_select()))
         df = df[new_cols]
         user_sheet.set(df)
         print("user sheet has been set.")
+        return df
 
     @output
     @render_widget
     def user_select_time_variable_plot():
         fig = go.Figure()
-        df = user_sheet.get()
+        df = set_user_sheet()
         columns = df.drop(["時間", "原本的時間"], axis=1).columns.tolist()
 
         for i, column in enumerate(columns):
@@ -186,7 +191,11 @@ def trend_analysis_server(
 
         fig.update_layout(
             autosize=True,
-            height=450
+            height=350,
+            margin={
+                "t": 0,
+                "b": 0
+            },
         )
         return fig
 

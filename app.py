@@ -21,6 +21,7 @@ from modules.dataframe import (
     dataframe_server,
     dataframe_ui
 )
+import asyncio
 
 
 def introduction_ui():
@@ -99,15 +100,22 @@ def UI():
 
 
 def server(input: Inputs, output: Outputs, session: Session):
-    indoor_sheet = reactive.Value(load_sheet("indoor"))
-    outdoor_sheet = reactive.Value(load_sheet("outdoor"))
+    indoor_sheet = reactive.Value()
+    outdoor_sheet = reactive.Value()
+    reload_all(
+        indoor_sheet=indoor_sheet,
+        outdoor_sheet=outdoor_sheet
+    )
+
     user_sheet = reactive.Value()
 
     @reactive.Effect
     @reactive.event(input.btn_reload_sheet)
-    def reload_sheet():
-        indoor_sheet.set(load_sheet("indoor"))
-        outdoor_sheet.set(load_sheet("outdoor"))
+    def _():
+        reload_all(
+            indoor_sheet=indoor_sheet,
+            outdoor_sheet=outdoor_sheet
+        )
 
     dataframe_server(
         "dataframe",

@@ -6,6 +6,7 @@ from config import sensor_info
 import pandas as pd
 from plotly import graph_objects as go
 
+
 @module.ui
 def cross_analysis_ui():
     """
@@ -17,7 +18,7 @@ def cross_analysis_ui():
         ui.div(
             ui.row(
                 ui.column(
-                    6,
+                    4,
                     panel_box(
                         ui.h5(
                             {"class": "card-title"},
@@ -30,51 +31,60 @@ def cross_analysis_ui():
                         ),
                         ui.input_selectize(
                             id="cross_analysis_var_1",
-                            label="變數 1",
+                            label="變數",
                             choices=[],
                         ),
                     ),
                 ),
                 ui.column(
-                    6,
+                    4,
                     panel_box(
                         ui.h5(
                             {"class": "card-title"},
                             "變數 2"
                         ),
-                        ui.input_selectize(
+                        # TODO: input_selectize broken
+                        ui.input_select(
                             id="cross_analysis_sensor_2",
                             label="感測器位置",
-                            choices=sensor_info
+                            choices=sensor_info,
+                            selectize=True,
+                            selected="outdoor"
                         ),
                         ui.input_selectize(
                             id="cross_analysis_var_2",
-                            label="變數 2",
+                            label="變數",
                             choices=[],
                         ),
                     ),
                 ),
-                {"class": "mb-3"}
-            ),
-            ui.row(
                 ui.column(
-                    12,
-                    ui.panel_conditional(
-                        "input.cross_analysis_sensor_1 && input.cross_analysis_sensor_2 && input.cross_analysis_var_1 && input.cross_analysis_var_2",
-                        panel_box(
+                    4,
+                    panel_box(
+                        ui.panel_conditional(
+                            "input.cross_analysis_sensor_1 && input.cross_analysis_sensor_2 && input.cross_analysis_var_1 && input.cross_analysis_var_2",
+                            ui.h5(
+                                {"class": "card-title"},
+                                "篩選測量區間"
+                            ),
+                            ui.input_selectize(
+                                id="frequency_select_alt",
+                                label="頻率",
+                                choices={
+                                    "default": "預設（每五分鐘）",
+                                    "hour": "時",
+                                    "day": "日"
+                                },
+                            ),
                             ui.input_date_range(
                                 id="input_date_range_alt",
                                 label="測量區間",
                                 language="zh-TW",
                             ),
-                            ui.input_action_button(
-                                id="query",
-                                label="查詢",
-                                class_="me-auto"
-                            )
                         )
                     )
                 ),
+                {"class": "mb-3"}
             ),
         ),
 
@@ -86,6 +96,7 @@ def cross_analysis_ui():
             output_widget(id="cross_analysis", height="auto")
         ),
     )
+
 
 @module.server
 def cross_analysis_server(
@@ -109,6 +120,7 @@ def cross_analysis_server(
         ui.update_selectize(
             id="cross_analysis_var_1",
             choices=variables,
+            selected=variables[0]
         )
 
     @reactive.Effect
@@ -125,6 +137,7 @@ def cross_analysis_server(
         ui.update_selectize(
             id="cross_analysis_var_2",
             choices=variables,
+            selected=variables[0]
         )
 
     @reactive.Effect
@@ -161,18 +174,19 @@ def cross_analysis_server(
 
     @output
     @render_widget
-    @reactive.event(input.query)
     def cross_analysis():
+        with reactive.isolate():
+            location1 = input.cross_analysis_sensor_1()
+            location2 = input.cross_analysis_sensor_2()
+
         fig = go.Figure()
         column1 = input.cross_analysis_var_1()
         column2 = input.cross_analysis_var_2()
-        print(column1, column2)
 
-        var1_label_name = input.cross_analysis_sensor_1() + input.cross_analysis_var_1()
-        var2_label_name = input.cross_analysis_sensor_2() + input.cross_analysis_var_2()
 
-        location1 = input.cross_analysis_sensor_1()
-        location2 = input.cross_analysis_sensor_2()
+        var1_label_name = sensor_info[location1] + column1
+        var2_label_name = sensor_info[location2] + column2
+
 
         df1, df2 = None, None
 
@@ -192,16 +206,32 @@ def cross_analysis_server(
         mask2 = ((df2['時間'].dt.date >= m) & (df2['時間'].dt.date <= M))
         df2 = df2.loc[mask2]
 
-        fig.add_trace(
-            go.Scatter(
-                x=df1[column1],
-                y=df2[column2],
-                mode='markers'
+        if input.frequency_select_alt() == "hour":
+            df1 = df1.resample('H', on='時間').mean()
+            df2 = df2.resample('H', on='時間').mean()
+        elif input.frequency_select_alt() == "day":
+            df1 = df1.resample('D', on='時間').mean()
+            df2 = df2.resample('D', on='時間').mean()
+
+        try:
+            fig.add_trace(
+                go.Scatter(
+                    x=df1[column1],
+                    y=df2[column2],
+                    mode='markers'
+                )
             )
-        )
+        except KeyError as e:
+            pass
 
         fig.update_layout(
             autosize=True,
-            height=450
+            height=350,
+            xaxis_title=var1_label_name,
+            yaxis_title=var2_label_name,
+            margin={
+                "t": 0,
+                "b": 0
+            }
         )
         return fig

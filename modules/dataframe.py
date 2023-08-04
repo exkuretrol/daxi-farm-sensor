@@ -6,19 +6,15 @@ import pandas as pd
 @module.ui
 def dataframe_ui():
     return container(
-        panel_box(
-            ui.h5(
-                {"class": "card-title"},
-                "indoor"
+        ui.navset_tab_card(
+            ui.nav(
+                "室內",
+                ui.output_data_frame(id="indoor_df")
             ),
-            ui.output_data_frame(id="indoor_df")
-        ),
-        panel_box(
-            ui.h5(
-                {"class": "card-title"},
-                "outdoor"
-            ),
-            ui.output_data_frame(id="outdoor_df")
+            ui.nav(
+                "室外",
+                ui.output_data_frame(id="outdoor_df")
+            )
         ),
         # panel_box(
         #     ui.h5(

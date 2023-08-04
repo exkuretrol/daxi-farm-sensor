@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from config import sheet_config, sheet_url
+from shiny.reactive import Value
+from shiny import ui
 
 def load_sheet(location: str) -> pd.DataFrame:
     """
@@ -32,6 +34,16 @@ def load_sheet(location: str) -> pd.DataFrame:
     df['時間'] = pd.to_datetime(df['時間'], format='%Y-%m-%d %H:%M:%S')
     print(f"sheet {location} loaded successfully!")
     return df
+
+def reload_all(indoor_sheet: Value, outdoor_sheet: Value):
+    with ui.Progress() as p:
+        p.set(message="讀取檔案", detail="這需要花一點時間...")
+        indoor_sheet.set(load_sheet("indoor"))
+        p.inc(amount=.5, detail="讀取中")
+        outdoor_sheet.set(load_sheet("outdoor"))
+        p.inc(amount=.5)
+        p.set(message="完成！", detail="")
+    
 
 
 def expand_soil_cols(cols):
