@@ -1,4 +1,5 @@
 from shiny import ui, module, Inputs, Outputs, Session, reactive
+from shiny.reactive import Value
 from shinywidgets import output_widget, render_widget
 from utils.ui_utils import panel_box, container
 from utils.server_utils import collapse_soil_cols, get_date_range, get_variables, expand_soil_cols
@@ -112,9 +113,9 @@ def trend_analysis_server(
     input: Inputs,
     output: Outputs,
     session: Session,
-    indoor_sheet: pd.DataFrame,
-    outdoor_sheet: pd.DataFrame,
-    user_sheet: pd.DataFrame
+    indoor_sheet: Value,
+    outdoor_sheet: Value,
+    user_sheet: Value
 ):
     @reactive.Effect
     @reactive.event(input.sensor_location)
@@ -205,7 +206,7 @@ def trend_analysis_server_deprecated(
     input: Inputs,
     output: Outputs,
     session: Session,
-    user_sheet: pd.DataFrame,
+    user_sheet: Value,
 ):
     @output
     @render_widget

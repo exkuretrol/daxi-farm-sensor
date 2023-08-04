@@ -1,4 +1,5 @@
 from shiny import ui, module, Inputs, Outputs, Session, reactive
+from shiny.reactive import Value
 from shinywidgets import output_widget, render_widget
 from utils.ui_utils import panel_box, container
 from utils.server_utils import get_variables, get_date_range, collapse_soil_cols
@@ -103,8 +104,8 @@ def cross_analysis_server(
     input: Inputs,
     output: Outputs,
     session: Session,
-    indoor_sheet: pd.DataFrame,
-    outdoor_sheet: pd.DataFrame,
+    indoor_sheet: Value,
+    outdoor_sheet: Value,
 ):
     @reactive.Effect
     @reactive.event(input.cross_analysis_sensor_1)

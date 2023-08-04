@@ -1,4 +1,5 @@
 from shiny import module, ui, render, Inputs, Outputs, Session
+from shiny.reactive import Value
 from utils.ui_utils import panel_box, container
 import pandas as pd
 
@@ -33,8 +34,8 @@ def dataframe_server(
     input: Inputs,
     output: Outputs,
     Session: Session,
-    indoor_sheet: pd.DataFrame,
-    outdoor_sheet: pd.DataFrame,
+    indoor_sheet: Value,
+    outdoor_sheet: Value,
 ):
     # @output
     # @render.text
