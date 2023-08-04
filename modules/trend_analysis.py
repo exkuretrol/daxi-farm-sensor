@@ -18,7 +18,6 @@ def trend_analysis_ui():
     資料篩選面板
     """
     return container(
-        # TODO: cannot display with .card class?
         ui.row(
             ui.column(
                 4,
@@ -29,7 +28,7 @@ def trend_analysis_ui():
                     ),
                     ui.input_radio_buttons(
                         id="sensor_location",
-                        label="感測器位置",
+                        label="位置",
                         choices=sensor_info,
                         selected="indoor",
                     ),
@@ -78,8 +77,16 @@ def trend_analysis_ui():
             ),
             class_="mb-3",
         ),
-        output_widget(
-            id="user_select_time_variable_plot", height="auto")
+        panel_box(
+            ui.h5(
+                {"class": "card-title"},
+                "趨勢圖"
+            ),
+            output_widget(
+                id="user_select_time_variable_plot", 
+                height="auto"
+            )
+        )
     ),
 
 
