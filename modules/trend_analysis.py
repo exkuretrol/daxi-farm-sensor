@@ -10,8 +10,6 @@ from plotly import (
 )
 from plotly.subplots import make_subplots
 
-import pandas as pd
-
 
 @module.ui
 def trend_analysis_ui():

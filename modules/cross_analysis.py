@@ -4,7 +4,6 @@ from shinywidgets import output_widget, render_widget
 from utils.ui_utils import panel_box, container
 from utils.server_utils import get_variables, get_date_range, collapse_soil_cols
 from config import sensor_info
-import pandas as pd
 from plotly import graph_objects as go
 
 
