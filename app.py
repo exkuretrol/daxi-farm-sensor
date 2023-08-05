@@ -45,12 +45,12 @@ def nav_controls() -> List[NavSetArg]:
         ui.nav(
             "變數趨勢圖",
             trend_analysis_ui("trend_analysis"),
-            icon=faicon("fa-solid fa-satellite-dish me-1")
+            icon=faicon("fa-solid fa-chart-line me-1")
         ),
         ui.nav(
             "交叉分析",
             cross_analysis_ui("cross_analysis"),
-            icon=faicon("fa-solid fa-satellite-dish me-1")
+            icon=faicon("fa-solid fa-shuffle me-1")
         ),
         ui.nav(
             "資料框",
