@@ -1,8 +1,11 @@
 from shiny import App, Inputs, Outputs, Session, ui, reactive
 from shiny.types import NavSetArg
 from typing import List
-from utils.ui_utils import *
-from utils.server_utils import *
+from utils.ui_utils import (
+    container, 
+    faicon
+)
+from utils.server_utils import reload_all
 from config import (
     root_dir,
     js_path,
@@ -18,10 +21,9 @@ from modules.trend_analysis import (
     trend_analysis_server,
 )
 from modules.dataframe import (
+    dataframe_ui,
     dataframe_server,
-    dataframe_ui
 )
-import asyncio
 
 
 def introduction_ui():
