@@ -1,17 +1,12 @@
 from htmltools import Tag, TagChild
 from shiny import ui
 
-def panel_box(*args, **kwargs):
-    return ui.div(
-        {"class": "card mb-3 h-100"},
-        ui.div(
-            {"class": "card-body d-flex flex-column"},
-            *args
-        ),
-        **kwargs
-    )
-
 def container(*args: TagChild, _class=""):
+    """
+    容器 class
+
+    """
+
     return ui.div(
         {"class": "container" + " " + _class},
         *args,
@@ -19,6 +14,11 @@ def container(*args: TagChild, _class=""):
 
 
 def faicon(_class="") -> Tag:
+    """
+    fontawesome 圖示
+
+    """
+
     return ui.tags.i(
         {"class": _class}
     )
@@ -32,6 +32,10 @@ def spacer():
 
 
 def panel_box(*args, **kwargs):
+    """
+    bootstrap card 樣式
+
+    """
     return ui.div(
         {"class": "card mb-3 h-100"},
         ui.div(

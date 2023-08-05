@@ -16,7 +16,8 @@ import pandas as pd
 @module.ui
 def trend_analysis_ui():
     """
-    資料篩選面板
+    趨勢圖分析 ui
+
     """
     return container(
         ui.row(
@@ -96,6 +97,11 @@ def trend_analysis_ui():
 
 @module.ui
 def trend_analysis_ui_deprecated():
+    """
+    舊的趨勢圖分析 ui
+    
+    """
+
     return container(
         ui.navset_tab_card(
             ui.nav(
@@ -117,6 +123,11 @@ def trend_analysis_server(
     outdoor_sheet: Value,
     user_sheet: Value
 ):
+    """
+    趨勢圖分析 server
+
+    """
+
     @reactive.Effect
     @reactive.event(input.sensor_location)
     def _():
@@ -208,6 +219,10 @@ def trend_analysis_server_deprecated(
     session: Session,
     user_sheet: Value,
 ):
+    """
+    舊的趨勢圖分析 server
+
+    """
     @output
     @render_widget
     def temperature():

@@ -11,7 +11,7 @@ from plotly import graph_objects as go
 @module.ui
 def cross_analysis_ui():
     """
-    交叉分析篩選面板
+    交叉分析 ui
 
     """
 
@@ -107,6 +107,11 @@ def cross_analysis_server(
     indoor_sheet: Value,
     outdoor_sheet: Value,
 ):
+    """
+    交叉分析 server
+    
+    """
+
     @reactive.Effect
     @reactive.event(input.cross_analysis_sensor_1)
     def _():

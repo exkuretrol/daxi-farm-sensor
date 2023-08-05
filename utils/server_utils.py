@@ -7,6 +7,7 @@ from shiny import ui
 def load_sheet(location: str) -> pd.DataFrame:
     """
     讀取表格
+
     """
     csv_url = f"{sheet_url}/export?format=csv&gid={sheet_config.get(location)}"
 
@@ -36,6 +37,10 @@ def load_sheet(location: str) -> pd.DataFrame:
     return df
 
 def reload_all(indoor_sheet: Value, outdoor_sheet: Value):
+    """
+    重新讀取所有表格
+
+    """
     with ui.Progress() as p:
         p.set(message="讀取檔案", detail="這需要花一點時間...")
         indoor_sheet.set(load_sheet("indoor"))

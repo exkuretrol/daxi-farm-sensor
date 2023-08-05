@@ -1,11 +1,14 @@
 from shiny import module, ui, render, Inputs, Outputs, Session
 from shiny.reactive import Value
-from utils.ui_utils import panel_box, container
-import pandas as pd
+from utils.ui_utils import container
 
 
 @module.ui
 def dataframe_ui():
+    """
+    資料框 ui
+
+    """
     return container(
         ui.navset_tab_card(
             ui.nav(
@@ -37,6 +40,11 @@ def dataframe_server(
     indoor_sheet: Value,
     outdoor_sheet: Value,
 ):
+    """
+    資料框 server
+    
+    """
+
     # @output
     # @render.text
     # def sheet_info():
