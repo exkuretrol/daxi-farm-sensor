@@ -1,7 +1,8 @@
 from shiny import ui, module, Inputs, Outputs, Session, reactive
 from shiny.reactive import Value
+from shiny import experimental as x
 from shinywidgets import output_widget, render_widget
-from utils.ui_utils import panel_box, container
+from utils.ui_utils import card, container
 from utils.server_utils import get_variables, get_date_range, collapse_soil_cols
 from config import sensor_info
 from plotly import graph_objects as go
@@ -19,7 +20,7 @@ def cross_analysis_ui():
             ui.row(
                 ui.column(
                     4,
-                    panel_box(
+                    card(
                         ui.h5(
                             {"class": "card-title"},
                             "變數 1"
@@ -38,7 +39,7 @@ def cross_analysis_ui():
                 ),
                 ui.column(
                     4,
-                    panel_box(
+                    card(
                         ui.h5(
                             {"class": "card-title"},
                             "變數 2"
@@ -60,7 +61,7 @@ def cross_analysis_ui():
                 ),
                 ui.column(
                     4,
-                    panel_box(
+                    card(
                         ui.panel_conditional(
                             "input.cross_analysis_sensor_1 && input.cross_analysis_sensor_2 && input.cross_analysis_var_1 && input.cross_analysis_var_2",
                             ui.h5(
@@ -89,12 +90,12 @@ def cross_analysis_ui():
             ),
         ),
 
-        panel_box(
-            ui.h5(
-                {"class": "card-title"},
+        x.ui.card(
+            x.ui.card_title(
                 "散佈圖"
             ),
-            output_widget(id="cross_analysis", height="auto")
+            output_widget(id="cross_analysis", height="auto"),
+            full_screen=True,
         ),
     )
 

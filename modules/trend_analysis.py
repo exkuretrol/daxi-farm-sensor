@@ -1,7 +1,8 @@
 from shiny import ui, module, Inputs, Outputs, Session, reactive
 from shiny.reactive import Value
+from shiny import experimental as x
 from shinywidgets import output_widget, render_widget
-from utils.ui_utils import panel_box, container
+from utils.ui_utils import card, container
 from utils.server_utils import collapse_soil_cols, get_date_range, get_variables, expand_soil_cols
 from config import sensor_info
 from plotly import (
@@ -21,7 +22,7 @@ def trend_analysis_ui():
         ui.row(
             ui.column(
                 3,
-                panel_box(
+                card(
                     ui.h5(
                         {"class": "card-title"},
                         "選擇感測器位置"
@@ -37,7 +38,7 @@ def trend_analysis_ui():
             ),
             ui.column(
                 3,
-                panel_box(
+                card(
                     ui.h5(
                         {"class": "card-title"},
                         "篩選測量區間"
@@ -64,7 +65,7 @@ def trend_analysis_ui():
             ),
             ui.column(
                 6,
-                panel_box(
+                card(
                     ui.h5(
                         {"class": "card-title"},
                         "篩選變數",
@@ -80,16 +81,15 @@ def trend_analysis_ui():
             ),
             class_="mb-3",
         ),
-        panel_box(
-            ui.h5(
-                {"class": "card-title"},
+        x.ui.card(
+            x.ui.card_title(
                 "趨勢圖"
             ),
             output_widget(
                 id="user_select_time_variable_plot",
-                height="auto"
-            )
-        )
+            ),
+            full_screen=True,
+        ),
     ),
 
 
@@ -97,7 +97,7 @@ def trend_analysis_ui():
 def trend_analysis_ui_deprecated():
     """
     舊的趨勢圖分析 ui
-    
+
     """
 
     return container(
@@ -316,7 +316,7 @@ def trend_analysis_server_deprecated(
 
         if "氣壓" in user_select_variable:
             ui.insert_ui(
-                panel_box(
+                card(
                     {"class": "plot"},
                     ui.h5(
                         {"class": "card-title"},
@@ -329,7 +329,7 @@ def trend_analysis_server_deprecated(
 
         if "氣溫" in user_select_variable:
             ui.insert_ui(
-                panel_box(
+                card(
                     {"class": "plot"},
                     ui.h5(
                         {"class": "card-title"},
@@ -342,7 +342,7 @@ def trend_analysis_server_deprecated(
 
         if "空氣相對溼度" in user_select_variable:
             ui.insert_ui(
-                panel_box(
+                card(
                     {"class": "plot"},
                     ui.h5(
                         {"class": "card-title"},
@@ -355,7 +355,7 @@ def trend_analysis_server_deprecated(
 
         if "光強度" in user_select_variable:
             ui.insert_ui(
-                panel_box(
+                card(
                     {"class": "plot"},
                     ui.h5(
                         {"class": "card-title"},
@@ -368,7 +368,7 @@ def trend_analysis_server_deprecated(
 
         if "風向" in user_select_variable:
             ui.insert_ui(
-                panel_box(
+                card(
                     {"class": "plot"},
                     ui.h5(
                         {"class": "card-title"},
@@ -381,7 +381,7 @@ def trend_analysis_server_deprecated(
 
         if "風速" in user_select_variable:
             ui.insert_ui(
-                panel_box(
+                card(
                     {"class": "plot"},
                     ui.h5(
                         {"class": "card-title"},
@@ -394,7 +394,7 @@ def trend_analysis_server_deprecated(
 
         if "土壤感測器1" in user_select_variable:
             ui.insert_ui(
-                panel_box(
+                card(
                     {"class": "plot"},
                     ui.h5(
                         {"class": "card-title"},
@@ -407,7 +407,7 @@ def trend_analysis_server_deprecated(
 
         if "土壤感測器2" in user_select_variable:
             ui.insert_ui(
-                panel_box(
+                card(
                     {"class": "plot"},
                     ui.h5(
                         {"class": "card-title"},
@@ -420,7 +420,7 @@ def trend_analysis_server_deprecated(
 
         if "土壤感測器3" in user_select_variable:
             ui.insert_ui(
-                panel_box(
+                card(
                     {"class": "plot"},
                     ui.h5(
                         {"class": "card-title"},
@@ -433,7 +433,7 @@ def trend_analysis_server_deprecated(
 
         if "土壤感測器4" in user_select_variable:
             ui.insert_ui(
-                panel_box(
+                card(
                     {"class": "plot"},
                     ui.h5(
                         {"class": "card-title"},
