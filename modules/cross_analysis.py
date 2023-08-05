@@ -81,6 +81,7 @@ def cross_analysis_ui():
                                 id="input_date_range_alt",
                                 label="測量區間",
                                 language="zh-TW",
+                                separator=" 至 "
                             ),
                         )
                     )
