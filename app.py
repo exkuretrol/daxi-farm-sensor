@@ -80,10 +80,10 @@ def nav_controls() -> List[NavSetArg]:
 # Part 1: ui
 
 
-def UI():
+def ui_():
     return ui.page_navbar(
         *nav_controls(),
-        title="大溪農場物聯網",
+        title="智慧農場資料視覺化",
         position="fixed-top",
         footer=ui.div(
             ui.head_content(
@@ -140,7 +140,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
 
 app = App(
-    ui=UI(),
+    ui=ui_(),
     server=server,
     static_assets=public_dir,
     debug=False
