@@ -99,3 +99,8 @@ def get_variables(sheet: pd.DataFrame):
     取得資料框除了時間以外的所有變數名稱
     """
     return sheet.columns.drop('時間').tolist()
+
+def convert_epoch_to_strftime(df: pd.DataFrame):
+    df_ = df.copy()
+    df_['時間'] = df['時間'].dt.strftime('%Y/%m/%d %H:%M:%S')
+    return df_

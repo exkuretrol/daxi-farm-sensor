@@ -1,6 +1,7 @@
 from shiny import module, ui, render, Inputs, Outputs, Session
 from shiny.reactive import Value
 from utils.ui_utils import container
+from utils.server_utils import convert_epoch_to_strftime
 
 
 @module.ui
@@ -55,9 +56,9 @@ def dataframe_server(
     @output
     @render.data_frame
     def indoor_df():
-        return indoor_sheet.get()
+        return convert_epoch_to_strftime(indoor_sheet.get())
 
     @output
     @render.data_frame
     def outdoor_df():
-        return outdoor_sheet.get()
+        return convert_epoch_to_strftime(outdoor_sheet.get())
