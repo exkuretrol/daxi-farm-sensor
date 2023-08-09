@@ -2,6 +2,7 @@ from shiny import module, ui, render, Inputs, Outputs, Session
 from shiny.reactive import Value
 from utils.ui_utils import container
 from utils.server_utils import convert_epoch_to_strftime
+import pandas as pd
 
 
 @module.ui
@@ -43,7 +44,7 @@ def dataframe_server(
 ):
     """
     資料框 server
-    
+
     """
 
     # @output
@@ -56,9 +57,13 @@ def dataframe_server(
     @output
     @render.data_frame
     def indoor_df():
-        return convert_epoch_to_strftime(indoor_sheet.get())
+        df = indoor_sheet.get()
+        df.sort_values(by="時間", ascending=False, inplace=True)
+        return convert_epoch_to_strftime(df)
 
     @output
     @render.data_frame
     def outdoor_df():
-        return convert_epoch_to_strftime(outdoor_sheet.get())
+        df = outdoor_sheet.get()
+        df.sort_values(by="時間", ascending=False, inplace=True)
+        return convert_epoch_to_strftime(df)
